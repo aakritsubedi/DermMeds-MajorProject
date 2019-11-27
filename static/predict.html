@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Classify Skin Diseases</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+</head>
+<body>
+<div id="header" id="home">
+            <div class="container text-center">
+                    <div style="margin-top: 25px;font-family: cursive;font-weight: bolder;">
+                        <a href="http://localhost/dermmeds/public/" >
+                            <h1>
+                                <i class="fa fa-stethoscope"></i>
+                                <font color="navy">DERM</font>
+                                <font color="maroon">MEDS</font>
+                            </h1>
+                        </a>
+                        &nbsp;&nbsp;&nbsp;<small>skin diseases analysis using CNN</small>
+                    </div>
+            </div>
+        </div>
+<div class="container">
+
+    <div class="row d-print-none" style="margin:50px;">
+        <div class="col-md-8 offset-2">
+            <h3 class="text-center text-success">Skin Disease Predictor</h3>
+            <hr>
+            <label for="skinImg">Upload Skin Infected Photo</label>
+            <input type="file" id="skinImg" class="form-control"><br/>
+            <button class="btn btn-success" id="predictBtn">Predict</button>
+        </div>
+        <br>
+    </div>
+    <div class="row">
+        <div class="col-md-7">
+            <h3>Uploaded Photo:</h3>
+            <img src="uploadPhoto.png" alt="User Uploaded Photo" class="img-responsive" id="displayImg" style="height:350px;width: 350px;">
+        </div>
+        <div class="col-md-4 offset-1">
+            <h3>Processed Photo:</h3>
+            <a href="" id="linkProcessedPhoto" target="_blank">
+                <img src="uploadPhoto.png" alt="Processed Photo" class="img-responsive" id="processedImg" style="margin: 15px;">
+            </a>
+        </div>
+    </div>
+    <br>
+    <hr>
+    <div class="row">
+            <div class="col-md-6">
+                <h2 class="text-info">Result:</h2>
+                <table class="table table-hover">
+                    <tr>
+                        <th>Disease Name</th>
+                        <th>Probability</th>
+                        <th>Predicted %</th>
+                    </tr>
+                    <tbody>
+                        <tr>
+                            <td>Actinic Keratosis</td>
+                            <th><span id="benignPred"> </span> </th>
+                            <th><span id="benignPer"></span> %</th>
+                        </tr>
+                        <tr>
+                            <td>Basal Cell Carcinoma</td>
+                            <th><span id="malignantPred"> </span> </th>
+                            <th><span id="malignantPer"></span> %</th>
+                        </tr>
+                        <tr>
+                            <td>Melanoma Skin Cancer</td>
+                            <th><span id="melanomaPred"> </span> </th>
+                            <th><span id="melanomaPer"></span> %</th>
+                        </tr>
+                        <tr>
+                            <td>Squamous Cell Carcinoma</td>
+                            <th><span id="skinCancerPred"> </span> </th>
+                            <th><span id="skinCancerPer"></span> %</th>
+                        </tr>
+                    </tbody>
+                </table>
+                <hr>
+            </div>
+            <div class="col-md-6">
+                <div id="piechart" style="width:auto; height: 350px;"></div>
+            </div>
+    </div>
+    <div class="row">
+        <div class="col-md-7">
+            <div id="barchart_values" style="width:auto; height: 500px;"></div>
+        </div>
+        <div class="col-md-5">
+            <h3 id="resultParagraph"></h3>
+            <p style="text-indent: 50px;" id="modelPrediction"></p>
+        </div>
+    </div>
+</div>
+</body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    let base64Image
+    $("#skinImg").change(function () {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            let dataURL = reader.result;
+            $('#displayImg').attr("src", dataURL);
+            base64Image = dataURL.replace(/^data:image\/\w+;base64,/, "")
+            console.log(base64Image)
+        }
+        reader.readAsDataURL($("#skinImg")[0].files[0]);
+        $('#benignPred').text(" ** ");
+        $('#malignantPred').text(" ** ");
+        $('#melanomaPred').text(" ** ");
+        $('#skinCancerPred').text(" ** ");
+
+        $('#benignPer').text(" ** ");
+        $('#malignantPer').text(" ** ");
+        $('#melanomaPer').text(" ** ");
+        $('#skinCancerPer').text(" ** ");
+
+        $('#resultParagraph').text(" ");
+        $('#modelPrediction').text(" ");
+
+        $('#processedImg').attr("src", "loading.gif");
+
+    })
+    $('#predictBtn').click(function (event) {
+        let message = {
+            image: base64Image
+        }
+        console.log(message);
+        $.post("http://localhost:5000/predict", JSON.stringify(message), function (response) {
+
+            $('#benignPred').text(response.result.actinic_keratosis.toFixed(10));
+            $('#malignantPred').text(response.result.basal_cell_carcinoma.toFixed(10));
+            $('#melanomaPred').text(response.result.melanoma.toFixed(10));
+            $('#skinCancerPred').text(response.result.squamous_cell_carcinoma.toFixed(10));
+
+            $('#benignPer').text(response.result.actinic_keratosis.toFixed(5)*100);
+            $('#malignantPer').text(response.result.basal_cell_carcinoma.toFixed(5)*100);
+            $('#melanomaPer').text(response.result.melanoma.toFixed(5)*100);
+            $('#skinCancerPer').text(response.result.squamous_cell_carcinoma.toFixed(5)*100);
+
+            $('#resultParagraph').text("Our System Prediction");
+            $('#modelPrediction').html("Our system processes the image that you upload. After processing the uploaded image and " +
+                "feeding it to the intelligent system, the model predicted the infected skin with disease,<b><code>" +response.diseases+
+                " Skin Cancer</code></b> with the precision of: <kbd>"+ response.precision.toFixed(3)+"%.</kbd>"+
+                    " The result summary is tabulated below: <br/>"+
+                    "<table class='table table-bordered'>" +
+                    "<tr><th>Disease Predicted</th><th>Precision</th><th>Probability</th></tr>"+
+                    "<tr><td><u>"+response.diseases+"</u></td><td>"+response.precision.toFixed(3)/100+"</td><td>"+response.precision.toFixed(3)+"</td></tr>"+
+                "</table>"+
+                    "<br/> <button onclick='window.print()' class='btn btn-info d-print-none'>Print Report</button>"
+            )
+
+            $('#processedImg').attr("src", response.imgName);
+            $('#linkProcessedPhoto').attr("href",response.imgName);
+
+            /*Graph*/
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChartPie);
+
+              function drawChartPie() {
+
+                var data = google.visualization.arrayToDataTable([
+                    ['Diseases', 'Probability'],
+                    ['Actinic Keratosis',response.result.actinic_keratosis*100],
+                    ['Melanoma',response.result.melanoma*100],
+                    ['Basal Cell Carcinoma',response.result.basal_cell_carcinoma*100],
+                    ['Squamous Cell Carcinoma',response.result.squamous_cell_carcinoma*100]
+                ]);
+
+                var options = {
+                  title: 'Skin Diseases Predicted Probability'
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+
+                chart.draw(data, options);
+              }
+
+                google.charts.setOnLoadCallback(drawChartBar);
+                function drawChartBar() {
+                  var data = google.visualization.arrayToDataTable([
+                        ['Diseases', 'Probability'],
+                        ['Actinic Keratosis',response.result.actinic_keratosis*100],
+                        ['Melanoma',response.result.melanoma*100],
+                        ['Basal Cell Carcinoma',response.result.basal_cell_carcinoma*100],
+                        ['Squamous Cell Carcinoma',response.result.squamous_cell_carcinoma*100]
+                  ]);
+
+                  var view = new google.visualization.DataView(data);
+
+                  var options = {
+                    title: "Predicted Percentage",
+                    width: 600,
+                    height: 400,
+                    bar: {groupWidth: "95%"},
+                    legend: { position: "none" },
+                  };
+                  var chart = new google.visualization.BarChart(document.getElementById("barchart_values"));
+                  chart.draw(view, options);
+              }
+
+            console.log(response.result)
+        })
+    })
+</script>
+</html>

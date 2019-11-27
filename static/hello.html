@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trying Flask</title>
+    <style>
+        *{
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="name-input">
+    <button id="name-button">Submit Name</button>
+    <p id="greetings"></p>
+</body>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+    $('#name-button').click(function (event) {
+        let message = {
+            name: $('#name-input').val()
+        }
+        $.post("http://localhost:5000/hello", JSON.stringify(message), function (response) {
+            $('#greetings').text(response.greeting);
+            console.log(response)
+        })
+    })
+</script>
+</html>
